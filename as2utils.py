@@ -6,12 +6,16 @@ import collections
 import zlib
 import time
 import traceback
+from django.core.exceptions import ValidationError
+from django.core.files.storage import FileSystemStorage
+from django.db.models import FileField
 from django.utils.translation import ugettext as _
 from pyasn1.type import univ, namedtype, tag, namedval, constraint
 from pyasn1.codec.ber import encoder, decoder
 from M2Crypto import BIO, Rand, SMIME, X509
 from cStringIO import StringIO
 from email.generator import Generator
+from pyas2 import pyas2init
 
 key_pass = ''
 
@@ -343,3 +347,51 @@ def verify_payload(msg, raw_sig, cert, ca_cert, verify_cert):
 
 def getKeyPassphrase(self):
     return key_pass
+
+
+class EphemeralFileSystemStorage(FileSystemStorage):
+    """ For use with ephemeral file systems (e.g. Heroku) where
+
+        1) file storage is not persisted long-term
+        2) the destination file already exists via deployment
+        3) but needs to be referenced by a model
+
+    Uploading is a no-op and only serves to set the path name to the file correctly so future reads load the correct file.
+
+    Once the name is set, reading the file works as normal.
+
+    Usage:
+
+        1) Deploy the required file in the upload_to directory, so that it exists at runtime
+        2) "upload" a file with the same name on a particular model (content of file does not matter)
+        3) That model file field is now linked to the already existing mondel
+
+    """
+
+    def get_available_name(self, name):
+        return name
+
+    def _save(self, name, content):
+        return name
+
+
+class EphemeralFileField(FileField):
+    HELP_TEXT = 'File must exist on target system already.  Uploading only sets path/name, uploaded file content is discarded.'
+
+    def __init__(self, verbose_name=None, name=None, upload_to='', storage=None, **kwargs):
+        if 'help_text' not in kwargs:
+            kwargs['help_text'] = EphemeralFileField.HELP_TEXT
+
+        if storage is None:
+            storage = EphemeralFileSystemStorage(location=pyas2init.gsettings['root_dir'], base_url='/pyas2')
+
+        super(EphemeralFileField, self).__init__(verbose_name=verbose_name, name=name, upload_to=upload_to, storage=storage, **kwargs)
+
+    def validate(self, value, model_instance):
+        if not self.exists(value):
+            raise ValidationError('No target file found with name "%s"' % value.name)
+        
+        return super(EphemeralFileField, self).validate(value, model_instance)
+
+    def exists(self, value):
+        return self.storage.exists(value.field.generate_filename(value, value.name))

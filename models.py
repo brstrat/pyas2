@@ -1,5 +1,4 @@
 from django.db import models
-from django.core.files.storage import FileSystemStorage
 from django.utils.translation import ugettext as _
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -13,18 +12,18 @@ import sys
 DEFAULT_ENTRY = ('',"---------")
 pyas2init.initialize()
 pyas2init.initserverlogging('pyas2')
-upload_storage = FileSystemStorage(location=pyas2init.gsettings['root_dir'], base_url='/pyas2')
+cert_path = pyas2init.gsettings['cert_path']
 
 class PrivateCertificate(models.Model):
-    certificate = models.FileField(upload_to='certificates', storage=upload_storage)
-    ca_cert = models.FileField(upload_to='certificates', storage=upload_storage,  verbose_name=_('Local CA Store'), null=True, blank=True)
-    certificate_passphrase = models.CharField(max_length=100)
+    certificate = as2utils.EphemeralFileField(upload_to=cert_path)
+    ca_cert = as2utils.EphemeralFileField(upload_to=cert_path, verbose_name=_('Local CA Store'), null=True, blank=True)
+    certificate_passphrase = models.CharField(max_length=100, blank=True, null=True)
     def __str__(self):
         return os.path.basename(self.certificate.name)
   
 class PublicCertificate(models.Model):
-    certificate = models.FileField(upload_to='certificates', storage=upload_storage)
-    ca_cert = models.FileField(upload_to='certificates', storage=upload_storage, verbose_name=_('Local CA Store'), null=True, blank=True)
+    certificate = as2utils.EphemeralFileField(upload_to=cert_path)
+    ca_cert = as2utils.EphemeralFileField(upload_to=cert_path, verbose_name=_('Local CA Store'), null=True, blank=True)
     verify_cert = models.BooleanField(verbose_name=_('Verify Certificate'), default=True,help_text=_('Uncheck this option to disable certificate verification.'))
     def __str__(self):
         return os.path.basename(self.certificate.name)
@@ -80,7 +79,7 @@ class Partner(models.Model):
     http_auth = models.BooleanField(verbose_name=_('Enable Authentication'), default=False)
     http_auth_user = models.CharField(max_length=100, null=True, blank=True)
     http_auth_pass = models.CharField(max_length=100, null=True, blank=True)
-    https_ca_cert = models.FileField(upload_to='certificates', verbose_name=_('HTTPS Local CA Store'), storage=upload_storage, null=True, blank=True)
+    https_ca_cert = as2utils.EphemeralFileField(upload_to=cert_path, verbose_name=_('HTTPS Local CA Store'), null=True, blank=True)
     target_url = models.URLField()
     subject = models.CharField(max_length=255, default=_('EDI Message sent using pyas2'))
     content_type = models.CharField(max_length=100, choices=CONTENT_TYPE_CHOICES, default='application/edi-consent')  
@@ -212,4 +211,3 @@ def update_dirs():
     for org in orgs:
 	for partner in partners:
 	    as2utils.dirshouldbethere(as2utils.join(pyas2init.gsettings['root_dir'], 'messages', partner.as2_name, 'outbox', org.as2_name))
-

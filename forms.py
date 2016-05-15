@@ -26,7 +26,7 @@ class PartnerForm(forms.ModelForm):
         exclude = []
 
 class PrivateCertificateForm(forms.ModelForm):
-    certificate_passphrase = forms.CharField(widget=forms.PasswordInput())
+    certificate_passphrase = forms.CharField(widget=forms.PasswordInput(), required=False)
     class Meta:
         model = models.PrivateCertificate
         fields = ['certificate', 'ca_cert', 'certificate_passphrase']
