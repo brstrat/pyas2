@@ -12,7 +12,9 @@ import sys
 DEFAULT_ENTRY = ('',"---------")
 pyas2init.initialize()
 pyas2init.initserverlogging('pyas2')
-cert_path = pyas2init.gsettings['cert_path']
+
+def cert_path(instance, name):
+    return '{}/{}'.format(pyas2init.gsettings['cert_path'], name)
 
 class PrivateCertificate(models.Model):
     certificate = as2utils.EphemeralFileField(upload_to=cert_path)

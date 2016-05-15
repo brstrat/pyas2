@@ -10,12 +10,16 @@ from django.core.exceptions import ValidationError
 from django.core.files.storage import FileSystemStorage
 from django.db.models import FileField
 from django.utils.translation import ugettext as _
+from django.utils.deconstruct import deconstructible
+from django.conf import settings
 from pyasn1.type import univ, namedtype, tag, namedval, constraint
 from pyasn1.codec.ber import encoder, decoder
 from M2Crypto import BIO, Rand, SMIME, X509
 from cStringIO import StringIO
 from email.generator import Generator
 from pyas2 import pyas2init
+from urlparse import urljoin
+
 
 key_pass = ''
 
@@ -349,6 +353,7 @@ def getKeyPassphrase(self):
     return key_pass
 
 
+@deconstructible
 class EphemeralFileSystemStorage(FileSystemStorage):
     """ For use with ephemeral file systems (e.g. Heroku) where
 
@@ -366,7 +371,15 @@ class EphemeralFileSystemStorage(FileSystemStorage):
         2) "upload" a file with the same name on a particular model (content of file does not matter)
         3) That model file field is now linked to the already existing mondel
 
+    Todo::  This can probably be better implemented as a "CharField on write, FileField on read" to avoid the faux-upload step
+
     """
+    def __init__(self, dir='', url=''):
+        self.dir = dir
+        super(EphemeralFileSystemStorage, self).__init__(location=os.path.join(settings.MEDIA_ROOT, self.dir), base_url=urljoin(settings.MEDIA_URL, url))
+
+    def __eq__(self, other):
+        return self.dir == other.dir
 
     def get_available_name(self, name):
         return name
@@ -383,7 +396,7 @@ class EphemeralFileField(FileField):
             kwargs['help_text'] = EphemeralFileField.HELP_TEXT
 
         if storage is None:
-            storage = EphemeralFileSystemStorage(location=pyas2init.gsettings['root_dir'], base_url='/pyas2')
+            storage = EphemeralFileSystemStorage()
 
         super(EphemeralFileField, self).__init__(verbose_name=verbose_name, name=name, upload_to=upload_to, storage=storage, **kwargs)
 
