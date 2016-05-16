@@ -1,30 +1,21 @@
 {% load admin_static %}
 {% load pyas2_extras %}
 <!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE|default:"en-us" }}" {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}>
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html lang="{{ LANGUAGE_CODE|default:'en-us' }}" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <title>pyAS2 {% block title %}{% endblock %}</title>
-    <link rel="stylesheet" type="text/css" href="{% block stylesheet %}{% static "admin/css/base.css" %}{% endblock %}" />
+    <link rel="stylesheet" type="text/css" href="{% block stylesheet %}{% static 'admin/css/base.css' %}{% endblock %}" />
     {% block extrastyle %}{% endblock %}
-    <!--[if lte IE 7]><link rel="stylesheet" type="text/css" href="{% block stylesheet_ie %}{% static "css/ie.css" %}{% endblock %}" /><![endif]-->
     {% block extrahead %}{% endblock %}
-    {% if LANGUAGE_BIDI %}<link rel="stylesheet" type="text/css" href="{% block stylesheet_rtl %}{% static "css/rtl.css"%}{% endblock %}" />{% endif %}
     <script type="text/javascript">window.__admin_media_prefix__ = "{% filter escapejs %}{{ STATIC_URL }}{% endfilter %}";</script>
-    <link rel="icon" type="image/png" href="{% static "images/favicon.ico" %}"/>
-    <link rel="stylesheet" type="text/css" href="{% static "css/pyas2.css" %}" />
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.ico' %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/pyas2.css' %}" />
 </head>
 {% load i18n %}
 
 
 <body class="{% if is_popup %}popup {% endif %}{% block bodyclass %}{% endblock %}">
 {% if not is_popup %}
-    <div id="logo">
-	<img src="{% static "images/pyas2logo.png" %}" />
-    </div>
-    <div id="environment">
-        <div style="color:{% get_init "environment_text_color" %}">{% get_init "environment_text" %} SERVER</div>
-    </div>
     {% include "pyas2/menu.html" %}
 {% endif %}
 <div id="container">

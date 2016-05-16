@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.translation import ugettext as _
+from django.conf import settings
 from pyas2 import models
 from pyas2 import as2lib
 from pyas2 import as2utils
@@ -57,5 +58,13 @@ class Command(BaseCommand):
             message.save()
             ### Send mail here 
             as2utils.senderrorreport(message,_(u'Failed to send message, error is %s' %e))
+
+            if getattr(settings, 'PDB_FAILURE', False):
+                exception_traceback = ''.join(traceback.format_exception(*sys.exc_info()))
+                # If local dev serer and PDB_FAILURE is enabled, break to pdb
+                import pdb
+                print exception_traceback
+                pdb.post_mortem(sys.exc_info()[2])
+
             sys.exit(2)
         sys.exit(0)

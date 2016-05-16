@@ -26,7 +26,7 @@ def initialize():
         gsettings['environment_text_color'] = pyas2_settings.get('ENVIRONMENTTEXTCOLOR','Black')
         gsettings['root_dir'] = settings.BASE_DIR
         gsettings['python_path'] = pyas2_settings.get('PYTHONPATH', sys.executable)
-        gsettings['managepy_path'] = as2utils.join(settings.BASE_DIR, 'manage.py')
+        gsettings['managepy_path'] = as2utils.join(settings.PROJECT_ROOT, 'manage.py')
         gsettings['daemon_port'] = pyas2_settings.get('DAEMONPORT', 16388)
         if pyas2_settings.get('DATADIR') and os.path.isdir(pyas2_settings.get('DATADIR')): 
             gsettings['root_dir'] = pyas2_settings.get('DATADIR')
